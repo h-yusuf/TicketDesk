@@ -51,7 +51,6 @@ export function CreateRequestForm({
   return (
     <div className="ticket">
       <div className="ticket-notch-left" />
-      <div className="ticket-notch-right" />
 
       <div className="flex items-baseline justify-between px-6 pt-4">
         <span className="font-mono text-xs tracking-wide text-ink/50">

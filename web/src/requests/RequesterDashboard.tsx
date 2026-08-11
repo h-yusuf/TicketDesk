@@ -34,7 +34,7 @@ export function RequesterDashboard() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <header className="flex items-baseline justify-between mb-8">
+      <header className="flex items-baseline justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             My Queue
@@ -56,6 +56,7 @@ export function RequesterDashboard() {
           </button>
         </div>
       </header>
+      <div className="masthead-rule mb-8" />
 
       {showForm && (
         <div className="mb-8">

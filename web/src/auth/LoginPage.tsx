@@ -29,7 +29,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
+        <div className="text-center">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             Intake Window
           </p>
@@ -38,10 +38,10 @@ export function LoginPage() {
             From request to resolution.
           </p>
         </div>
+        <div className="masthead-rule mb-8" />
 
         <div className="ticket">
           <div className="ticket-notch-left" />
-          <div className="ticket-notch-right" />
 
           <div className="px-6 pt-4">
             <span className="font-mono text-xs tracking-wide text-ink/50">

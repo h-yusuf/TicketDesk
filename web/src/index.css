@@ -5,29 +5,71 @@
 @layer base {
   body {
     @apply bg-paper text-ink font-body antialiased;
+    background-image: radial-gradient(rgba(27, 23, 18, 0.07) 0.6px, transparent 0.6px);
+    background-size: 5px 5px;
   }
 }
 
 @layer components {
-  .ticket {
-    @apply relative bg-white text-ink rounded-md border border-ink/10 shadow-[0_1px_2px_rgba(0,0,0,0.06)];
+  .masthead-rule {
+    @apply h-0 border-t-2 border-ink mt-2;
+  }
+  .masthead-rule::after {
+    content: "";
+    display: block;
+    border-top: 1px solid rgba(27, 23, 18, 0.4);
+    margin-top: 3px;
   }
 
-  .ticket-notch-left,
-  .ticket-notch-right {
-    @apply absolute w-4 h-4 rounded-full bg-paper border border-ink/10;
-    top: 3.25rem;
+  .ticket {
+    @apply relative bg-white text-ink rounded-md border border-ink/10 shadow-[0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden;
   }
+  .ticket-row {
+    @apply flex;
+  }
+
+  .ticket-body {
+    @apply flex-1 min-w-0;
+  }
+
   .ticket-notch-left {
+    @apply absolute w-4 h-4 rounded-full bg-paper border border-ink/10 z-10;
+    top: 3.25rem;
     left: -0.5rem;
-  }
-  .ticket-notch-right {
-    right: -0.5rem;
   }
 
   .ticket-perforation {
     @apply border-t border-dashed border-ink/25;
     margin-top: 3.25rem;
+  }
+
+  .ticket-stub {
+    @apply relative w-14 shrink-0 flex flex-col items-center justify-between py-4 border-l border-dashed border-ink/25;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--stub-color) 0,
+      var(--stub-color) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  .ticket-stub::before,
+  .ticket-stub::after {
+    content: "";
+    @apply absolute w-4 h-4 rounded-full bg-paper border border-ink/10;
+    left: -0.5rem;
+  }
+  .ticket-stub::before {
+    top: -0.5rem;
+  }
+  .ticket-stub::after {
+    bottom: -0.5rem;
+  }
+
+  .ticket-stub-id {
+    @apply font-mono text-[10px] tracking-[0.2em] uppercase text-ink/50;
+    writing-mode: vertical-rl;
   }
 
   .stamp {

@@ -49,7 +49,7 @@ export function ItAdminDashboard() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <header className="flex items-baseline justify-between mb-8">
+      <header className="flex items-baseline justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             Review Counter
@@ -63,6 +63,7 @@ export function ItAdminDashboard() {
           Sign out
         </button>
       </header>
+      <div className="masthead-rule mb-8" />
 
       {error && <p className="text-rust text-sm font-body mb-4">{error}</p>}
 
