@@ -3,16 +3,18 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import { CreateRequestForm } from "./CreateRequestForm";
+import { TicketCard } from "./TicketCard";
 
 interface RequestRow {
   id: string;
   title: string;
   status: string;
+  category: string;
   urgency: string;
 }
 
 export function RequesterDashboard() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [showForm, setShowForm] = useState(false);
 
@@ -27,31 +29,53 @@ export function RequesterDashboard() {
   }, [user]);
 
   return (
-    <div className="max-w-2xl mx-auto mt-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">My Requests</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white rounded px-3 py-1"
-        >
-          {showForm ? "Close" : "New Request"}
-        </button>
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <header className="flex items-baseline justify-between mb-8">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
+            My Queue
+          </p>
+          <h1 className="font-display text-2xl font-bold mt-1">Requests</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-amber hover:bg-amber-dark text-navy font-display font-semibold text-sm rounded-sm px-3 py-1.5 transition-colors"
+          >
+            {showForm ? "Close" : "New request"}
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="text-paper/40 hover:text-paper text-xs font-mono uppercase tracking-wide"
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
 
       {showForm && (
-        <div className="mb-6">
+        <div className="mb-8">
           <CreateRequestForm onCreated={() => setShowForm(false)} />
         </div>
       )}
 
-      <ul className="flex flex-col gap-2">
-        {requests.map((r) => (
-          <li key={r.id} className="border rounded p-3 flex justify-between">
-            <span>{r.title}</span>
-            <span className="text-sm text-gray-600">{r.status}</span>
-          </li>
-        ))}
-      </ul>
+      {requests.length === 0 ? (
+        <p className="text-paper/40 font-body text-sm">
+          No requests yet — submit one to start tracking it here.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-5">
+          {requests.map((r) => (
+            <TicketCard
+              key={r.id}
+              id={r.id}
+              title={r.title}
+              meta={`${r.category.replace(/_/g, " ")} · ${r.urgency} urgency`}
+              status={r.status}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

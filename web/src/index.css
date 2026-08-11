@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-navy text-paper font-body antialiased;
+  }
+}
+
+@layer components {
+  .ticket {
+    @apply relative bg-paper text-ink rounded-md shadow-[0_1px_0_rgba(0,0,0,0.4)];
+  }
+
+  .ticket-notch-left,
+  .ticket-notch-right {
+    @apply absolute w-4 h-4 rounded-full bg-navy;
+    top: 3.25rem;
+  }
+  .ticket-notch-left {
+    left: -0.5rem;
+  }
+  .ticket-notch-right {
+    right: -0.5rem;
+  }
+
+  .ticket-perforation {
+    @apply border-t border-dashed border-ink/25;
+    margin-top: 3.25rem;
+  }
+
+  .stamp {
+    @apply inline-block font-mono text-[11px] font-semibold tracking-widest uppercase
+      px-2.5 py-1 border-2 rounded-sm -rotate-6 select-none;
+  }
+}
