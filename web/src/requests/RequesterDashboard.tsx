@@ -20,6 +20,7 @@ export function RequesterDashboard() {
   const { user, signOut } = useAuth();
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [revisingId, setRevisingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -86,7 +87,20 @@ export function RequesterDashboard() {
                       {r.reviewNote || "IT/Admin asked for changes but left no note."}
                     </p>
                   </div>
-                  <ReviseRequestForm request={r} onResubmitted={() => {}} />
+
+                  {revisingId === r.id ? (
+                    <ReviseRequestForm
+                      request={r}
+                      onResubmitted={() => setRevisingId(null)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setRevisingId(r.id)}
+                      className="bg-violet text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90 self-start"
+                    >
+                      Revisi
+                    </button>
+                  )}
                 </div>
               )}
             </TicketCard>
