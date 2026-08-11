@@ -92,6 +92,7 @@ export function RequesterDashboard() {
                     <ReviseRequestForm
                       request={r}
                       onResubmitted={() => setRevisingId(null)}
+                      onCancel={() => setRevisingId(null)}
                     />
                   ) : (
                     <button

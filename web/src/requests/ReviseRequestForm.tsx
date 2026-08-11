@@ -21,9 +21,11 @@ interface RequestData {
 export function ReviseRequestForm({
   request,
   onResubmitted,
+  onCancel,
 }: {
   request: RequestData;
   onResubmitted: () => void;
+  onCancel: () => void;
 }) {
   const [title, setTitle] = useState(request.title);
   const [category, setCategory] = useState(request.category);
@@ -117,13 +119,22 @@ export function ReviseRequestForm({
 
       {error && <p className="text-rust text-sm font-body">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="bg-amber hover:bg-amber-dark disabled:opacity-50 text-navy font-display font-semibold text-sm rounded-sm px-3 py-1.5 transition-colors self-start"
-      >
-        {submitting ? "Resubmitting…" : "Resubmit request"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="bg-amber hover:bg-amber-dark disabled:opacity-50 text-navy font-display font-semibold text-sm rounded-sm px-3 py-1.5 transition-colors"
+        >
+          {submitting ? "Resubmitting…" : "Resubmit request"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="border border-ink/20 text-ink/60 hover:text-ink font-display font-semibold text-sm rounded-sm px-3 py-1.5 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }
