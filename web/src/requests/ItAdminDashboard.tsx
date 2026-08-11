@@ -17,6 +17,7 @@ interface RequestRow {
 export function ItAdminDashboard() {
   const { signOut } = useAuth();
   const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,11 +28,19 @@ export function ItAdminDashboard() {
     });
   }, []);
 
-  async function review(requestId: string, decision: "approve" | "reject" | "request_revision") {
+  async function review(
+    requestId: string,
+    decision: "approve" | "reject" | "request_revision"
+  ) {
     setError(null);
     try {
       const reviewRequest = httpsCallable(functions, "reviewRequest");
-      await reviewRequest({ requestId, decision });
+      const note = notes[requestId]?.trim();
+      await reviewRequest({
+        requestId,
+        decision,
+        ...(note ? { note } : {}),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review action failed.");
     }
@@ -71,25 +80,44 @@ export function ItAdminDashboard() {
               status={r.status}
             >
               {r.status === "pending" || r.status === "revision_requested" ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => review(r.id, "approve")}
-                    className="bg-sage text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor={`note-${r.id}`}
+                    className="font-mono text-xs uppercase tracking-wide text-ink/60"
                   >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => review(r.id, "reject")}
-                    className="bg-rust text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => review(r.id, "request_revision")}
-                    className="bg-violet text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
-                  >
-                    Request revision
-                  </button>
+                    Note (required for reject / request revision)
+                  </label>
+                  <textarea
+                    id={`note-${r.id}`}
+                    value={notes[r.id] ?? ""}
+                    onChange={(e) =>
+                      setNotes((prev) => ({ ...prev, [r.id]: e.target.value }))
+                    }
+                    rows={2}
+                    className="border border-ink/20 rounded-sm bg-transparent px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-amber"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => review(r.id, "approve")}
+                      className="bg-sage text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => review(r.id, "reject")}
+                      disabled={!notes[r.id]?.trim()}
+                      className="bg-rust text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90 disabled:opacity-40"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => review(r.id, "request_revision")}
+                      disabled={!notes[r.id]?.trim()}
+                      className="bg-violet text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90 disabled:opacity-40"
+                    >
+                      Request revision
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </TicketCard>

@@ -4,13 +4,16 @@ import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import { CreateRequestForm } from "./CreateRequestForm";
 import { TicketCard } from "./TicketCard";
+import { ReviseRequestForm } from "./ReviseRequestForm";
 
 interface RequestRow {
   id: string;
   title: string;
   status: string;
   category: string;
+  description: string;
   urgency: string;
+  reviewNote: string | null;
 }
 
 export function RequesterDashboard() {
@@ -72,7 +75,21 @@ export function RequesterDashboard() {
               title={r.title}
               meta={`${r.category.replace(/_/g, " ")} · ${r.urgency} urgency`}
               status={r.status}
-            />
+            >
+              {r.status === "revision_requested" && (
+                <div className="flex flex-col gap-4">
+                  <div className="border-l-2 border-violet pl-3">
+                    <p className="font-mono text-xs uppercase tracking-wide text-violet">
+                      Revision requested
+                    </p>
+                    <p className="text-sm font-body text-ink/70 mt-1">
+                      {r.reviewNote || "IT/Admin asked for changes but left no note."}
+                    </p>
+                  </div>
+                  <ReviseRequestForm request={r} onResubmitted={() => {}} />
+                </div>
+              )}
+            </TicketCard>
           ))}
         </ul>
       )}
