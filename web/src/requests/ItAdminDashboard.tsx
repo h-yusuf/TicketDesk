@@ -79,7 +79,12 @@ export function ItAdminDashboard() {
               meta={`${r.category.replace(/_/g, " ")} · ${r.urgency} urgency`}
               status={r.status}
             >
-              {r.status === "pending" || r.status === "revision_requested" ? (
+              {r.status === "revision_requested" && (
+                <p className="text-sm font-body text-ink/50 italic">
+                  Waiting on requester to revise and resubmit.
+                </p>
+              )}
+              {r.status === "pending" ? (
                 <div className="flex flex-col gap-2">
                   <label
                     htmlFor={`note-${r.id}`}
