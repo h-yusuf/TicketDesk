@@ -4,18 +4,18 @@
 
 @layer base {
   body {
-    @apply bg-navy text-paper font-body antialiased;
+    @apply bg-paper text-ink font-body antialiased;
   }
 }
 
 @layer components {
   .ticket {
-    @apply relative bg-paper text-ink rounded-md shadow-[0_1px_0_rgba(0,0,0,0.4)];
+    @apply relative bg-white text-ink rounded-md border border-ink/10 shadow-[0_1px_2px_rgba(0,0,0,0.06)];
   }
 
   .ticket-notch-left,
   .ticket-notch-right {
-    @apply absolute w-4 h-4 rounded-full bg-navy;
+    @apply absolute w-4 h-4 rounded-full bg-paper border border-ink/10;
     top: 3.25rem;
   }
   .ticket-notch-left {

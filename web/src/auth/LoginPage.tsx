@@ -30,11 +30,11 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             Intake Window
           </p>
           <h1 className="font-display text-3xl font-bold mt-2">ReqFlow</h1>
-          <p className="text-paper/50 text-sm mt-1">
+          <p className="text-ink/50 text-sm mt-1">
             From request to resolution.
           </p>
         </div>

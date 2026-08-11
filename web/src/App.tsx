@@ -8,7 +8,7 @@ export default function App() {
 
   if (loading)
     return (
-      <p className="mt-16 text-center font-mono text-xs uppercase tracking-[0.3em] text-amber">
+      <p className="mt-16 text-center font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
         Loading…
       </p>
     );

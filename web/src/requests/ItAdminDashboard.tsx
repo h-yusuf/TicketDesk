@@ -41,14 +41,14 @@ export function ItAdminDashboard() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <header className="flex items-baseline justify-between mb-8">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             Review Counter
           </p>
           <h1 className="font-display text-2xl font-bold mt-1">All Requests</h1>
         </div>
         <button
           onClick={() => signOut()}
-          className="text-paper/40 hover:text-paper text-xs font-mono uppercase tracking-wide"
+          className="text-ink/40 hover:text-ink text-xs font-mono uppercase tracking-wide"
         >
           Sign out
         </button>
@@ -57,7 +57,7 @@ export function ItAdminDashboard() {
       {error && <p className="text-rust text-sm font-body mb-4">{error}</p>}
 
       {requests.length === 0 ? (
-        <p className="text-paper/40 font-body text-sm">
+        <p className="text-ink/40 font-body text-sm">
           Queue is empty — new requests will land here for review.
         </p>
       ) : (

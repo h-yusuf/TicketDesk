@@ -32,7 +32,7 @@ export function RequesterDashboard() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <header className="flex items-baseline justify-between mb-8">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
             My Queue
           </p>
           <h1 className="font-display text-2xl font-bold mt-1">Requests</h1>
@@ -46,7 +46,7 @@ export function RequesterDashboard() {
           </button>
           <button
             onClick={() => signOut()}
-            className="text-paper/40 hover:text-paper text-xs font-mono uppercase tracking-wide"
+            className="text-ink/40 hover:text-ink text-xs font-mono uppercase tracking-wide"
           >
             Sign out
           </button>
@@ -60,7 +60,7 @@ export function RequesterDashboard() {
       )}
 
       {requests.length === 0 ? (
-        <p className="text-paper/40 font-body text-sm">
+        <p className="text-ink/40 font-body text-sm">
           No requests yet — submit one to start tracking it here.
         </p>
       ) : (
