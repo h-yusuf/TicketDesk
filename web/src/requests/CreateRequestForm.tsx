@@ -2,7 +2,12 @@ import { type FormEvent, useState } from "react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase";
 
-const CATEGORIES = ["hardware", "software", "access", "other"];
+const CATEGORIES = [
+  { value: "feature_request", label: "Request Baru" },
+  { value: "bug_fix", label: "Perbaikan Bug" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "other", label: "Lainnya" },
+];
 const URGENCIES = ["low", "medium", "high"];
 
 export function CreateRequestForm({
@@ -11,7 +16,7 @@ export function CreateRequestForm({
   onCreated: (requestId: string) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState(CATEGORIES[0].value);
   const [description, setDescription] = useState("");
   const [urgency, setUrgency] = useState(URGENCIES[0]);
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +62,8 @@ export function CreateRequestForm({
         className="border rounded px-2 py-1"
       >
         {CATEGORIES.map((c) => (
-          <option key={c} value={c}>
-            {c}
+          <option key={c.value} value={c.value}>
+            {c.label}
           </option>
         ))}
       </select>

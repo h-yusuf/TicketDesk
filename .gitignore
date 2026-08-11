@@ -5,3 +5,4 @@ lib/
 .firebase/
 *.local
 .env
+*-debug.log

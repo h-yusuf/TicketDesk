@@ -34,7 +34,7 @@ users/{uid}
 requests/{requestId}
   - requesterId: string (uid)
   - title: string
-  - category: "hardware" | "software" | "access" | "other"
+  - category: "feature_request" | "bug_fix" | "maintenance" | "other"
   - description: string
   - urgency: "low" | "medium" | "high"
   - status: "pending" | "revision_requested" | "rejected" | "approved" | <notion-synced string>
