@@ -12,6 +12,7 @@ interface RequestRow {
   category: string;
   urgency: string;
   requesterId: string;
+  reviewNote: string | null;
 }
 
 export function ItAdminDashboard() {
@@ -80,9 +81,19 @@ export function ItAdminDashboard() {
               status={r.status}
             >
               {r.status === "revision_requested" && (
-                <p className="text-sm font-body text-ink/50 italic">
-                  Waiting on requester to revise and resubmit.
-                </p>
+                <div className="flex flex-col gap-2">
+                  <div className="border-l-2 border-violet pl-3">
+                    <p className="font-mono text-xs uppercase tracking-wide text-violet">
+                      Our revision note
+                    </p>
+                    <p className="text-sm font-body text-ink/70 mt-1">
+                      {r.reviewNote || "(no note left)"}
+                    </p>
+                  </div>
+                  <p className="text-sm font-body text-ink/50 italic">
+                    Waiting on requester to revise and resubmit.
+                  </p>
+                </div>
               )}
               {r.status === "pending" ? (
                 <div className="flex flex-col gap-2">
