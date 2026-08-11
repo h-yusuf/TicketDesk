@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const DECISION_TO_STATUS: Record<string, string> = {
   approve: "approved",
@@ -18,7 +18,7 @@ export const reviewRequest = onCall<ReviewRequestInput>(async (request) => {
     throw new HttpsError("unauthenticated", "Must be signed in.");
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const callerDoc = await db.collection("users").doc(request.auth.uid).get();
   if (callerDoc.data()?.role !== "it_admin") {
     throw new HttpsError("permission-denied", "Only IT/Admin can review requests.");
@@ -35,7 +35,7 @@ export const reviewRequest = onCall<ReviewRequestInput>(async (request) => {
     status,
     reviewedBy: request.auth.uid,
     reviewNote: note ?? null,
-    updatedAt: admin.firestore.Timestamp.now(),
+    updatedAt: Timestamp.now(),
   });
 
   return { status };

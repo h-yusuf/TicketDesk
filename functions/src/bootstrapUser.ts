@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 export const bootstrapUser = onCall(async (request) => {
   if (!request.auth) {
@@ -7,7 +7,7 @@ export const bootstrapUser = onCall(async (request) => {
   }
 
   const uid = request.auth.uid;
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(uid);
   const existing = await userRef.get();
 
@@ -19,7 +19,7 @@ export const bootstrapUser = onCall(async (request) => {
     email: request.auth.token.email ?? null,
     displayName: request.auth.token.name ?? null,
     role: "requester",
-    createdAt: admin.firestore.Timestamp.now(),
+    createdAt: Timestamp.now(),
   });
 
   return { role: "requester" };

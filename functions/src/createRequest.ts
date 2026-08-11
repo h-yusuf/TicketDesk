@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const CATEGORIES = ["feature_request", "bug_fix", "maintenance", "other"];
 const URGENCIES = ["low", "medium", "high"];
@@ -31,9 +31,9 @@ export const createRequest = onCall<CreateRequestInput>(async (request) => {
     throw new HttpsError("invalid-argument", "Invalid urgency.");
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection("requests").doc();
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   await ref.set({
     requesterId: request.auth.uid,

@@ -1,5 +1,5 @@
-import * as admin from "firebase-admin";
-admin.initializeApp();
+import { initializeApp } from "firebase-admin/app";
+initializeApp();
 
 export { bootstrapUser } from "./bootstrapUser";
 export { createRequest } from "./createRequest";
