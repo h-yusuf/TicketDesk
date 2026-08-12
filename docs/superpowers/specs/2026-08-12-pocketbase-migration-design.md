@@ -25,10 +25,18 @@ calls (Firebase SDK → PocketBase SDK) change.
   validation and authorization requirement from the Firebase design is
   expressed as collection schema constraints (required fields, select
   enums) and API Rules.
-- Hosting: PocketBase binary on the user's existing Ubuntu/Debian VPS,
-  run under systemd, bound to `127.0.0.1:8090`. Caddy reverse-proxies the
-  user's domain to that port and handles automatic HTTPS (Let's Encrypt).
-  Only ports 80/443 are open to the public internet.
+- Hosting: fully Dockerized on the user's existing Ubuntu/Debian VPS via
+  `docker-compose`, three services:
+  - `pocketbase` — official PocketBase Docker image, `pb_data/` on a
+    named volume for durable SQLite storage across container restarts.
+  - `web` — a minimal nginx image serving the frontend's static
+    `dist/` build (built in a multi-stage Dockerfile; no Node.js runtime
+    at runtime).
+  - `caddy` — reverse proxy in front of both, routes the user's domain
+    to `web` and `/api/*` (and `/_/`) to `pocketbase`, provisions HTTPS
+    automatically (Let's Encrypt). Only ports 80/443 are published to
+    the host; `pocketbase` and `web` are reachable only inside the
+    compose network.
 
 ## 2. Data Model (PocketBase Collections)
 
@@ -69,8 +77,11 @@ project's equivalent of Firestore Security Rules.
 - `createRule`: public (registration is open) — role is not attacker-settable
   because the create rule additionally requires
   `@request.data.role:isset = false` (the field must be absent from the
-  signup payload, so it always falls back to the schema default
-  `requester`).
+  signup payload). PocketBase select fields have no native default value,
+  and `required` can't be combined with this rule (a required field must
+  be present, contradicting `:isset = false`) — so `role` is **not
+  required** and a fresh signup's role is `""`. App code treats `""` the
+  same as `requester` (least privilege) everywhere it checks role.
 - `updateRule`: `(id = @request.auth.id && @request.data.role:isset = false) || @request.auth.role = "it_admin"`
   — a user may update their own profile fields but not their own `role`;
   only an `it_admin` may change any user's `role`. This is done from the
@@ -83,10 +94,17 @@ project's equivalent of Firestore Security Rules.
 - `listRule` / `viewRule`: `requester = @request.auth.id || @request.auth.role = "it_admin"`
 - `createRule`: `@request.data.requester = @request.auth.id && @request.data.status = "pending"`
 - `updateRule`:
-  `@request.auth.role = "it_admin" || (requester = @request.auth.id && status = "revision_requested" && @request.data.status = "pending" && @request.data.requester = requester)`
-  — mirrors the Firebase design's rule exactly: IT/Admin can update
-  anything; the owner can only edit while `revision_requested`, and only
-  to flip status back to `pending` without reassigning the request.
+  `(@request.auth.role = "it_admin" && (...)) || (requester = @request.auth.id && status = "revision_requested" && @request.data.status = "pending" && @request.data.requester:isset = false)`
+  — mirrors the Firebase design's rule: IT/Admin can update anything
+  (subject to the note-required clause below); the owner can only edit
+  while `revision_requested`, and only to flip status back to `pending`
+  without reassigning the request. Unlike Firestore's
+  `request.resource.data` (submitted data merged with the existing
+  record), PocketBase's `@request.data.<field>` is the **submitted value
+  only** — an omitted field reads as unset, not "unchanged". So
+  "requester wasn't reassigned" must be expressed as
+  `@request.data.requester:isset = false` (field absent from the update
+  payload), not an equality check against the existing value.
 - `deleteRule`: `""` (nobody — equivalent to Firestore's `allow delete: if false`)
 - **Note-required enforcement** (new — was frontend-only under Firebase):
   the `it_admin` branch of `updateRule` additionally requires, when the
@@ -111,15 +129,23 @@ project's equivalent of Firestore Security Rules.
   callable entirely: there is no longer a separate "fetch my role after
   login" step.
 
-## 5. Deployment (VPS)
+## 5. Deployment (VPS, Docker Compose)
 
-- Download the PocketBase binary to the VPS (e.g. `/opt/pocketbase/`).
-  Data lives in `/opt/pocketbase/pb_data/` (SQLite file — durable on
-  disk, unlike the Firebase emulator's in-memory-by-default state).
-- Run it under a systemd unit (`pocketbase.service`) bound to
-  `127.0.0.1:8090`, `Restart=on-failure`, enabled on boot.
-- Caddy reverse-proxies the user's domain to `127.0.0.1:8090` and
-  provisions HTTPS automatically. No other inbound ports are exposed.
+- `docker-compose.yml` at the repo root (or a `deploy/` folder) defines:
+  - `pocketbase`: official `ghcr.io/muchobien/pocketbase` (or the user's
+    preferred PocketBase image) with `pb_data` on a named volume —
+    survives `docker compose down`/image updates.
+  - `web`: built from a multi-stage `web/Dockerfile` (`node:*` build
+    stage → `nginx:alpine` runtime stage serving `dist/`).
+  - `caddy`: official `caddy` image, mounts a `Caddyfile` that maps the
+    user's domain to `web` (frontend) and proxies API/admin paths to
+    `pocketbase`; a named volume persists its ACME certificate data.
+- Only `caddy`'s 80/443 are published to the host; `pocketbase` and
+  `web` have no host port mappings, reachable only via the compose
+  network.
+- `docker compose up -d` (re-run on redeploy) restarts changed services;
+  `restart: unless-stopped` on all three keeps them up across VPS
+  reboots.
 
 ## 6. Migration from the Existing Firebase Code
 

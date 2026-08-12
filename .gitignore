@@ -6,3 +6,4 @@ lib/
 *.local
 .env
 *-debug.log
+pocketbase/pb_data/
