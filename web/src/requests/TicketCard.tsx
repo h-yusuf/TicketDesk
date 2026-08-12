@@ -13,12 +13,16 @@ export function TicketCard({
   title,
   meta,
   status,
+  description,
+  submittedBy,
   children,
 }: {
   id: string;
   title: string;
   meta: string;
   status: string;
+  description?: string;
+  submittedBy?: string;
   children?: ReactNode;
 }) {
   const ticketNo = `#${id.slice(0, 6).toUpperCase()}`;
@@ -43,6 +47,16 @@ export function TicketCard({
           <p className="font-mono text-xs uppercase tracking-wide text-ink/50 mt-1">
             {meta}
           </p>
+          {submittedBy && (
+            <p className="text-xs font-body text-ink/50 mt-1">
+              Diajukan oleh <span className="text-ink/70">{submittedBy}</span>
+            </p>
+          )}
+          {description && (
+            <p className="text-sm font-body text-ink/80 mt-3 whitespace-pre-wrap">
+              {description}
+            </p>
+          )}
           {children && <div className="mt-4">{children}</div>}
         </div>
       </div>

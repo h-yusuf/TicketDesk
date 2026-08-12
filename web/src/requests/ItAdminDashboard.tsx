@@ -11,9 +11,18 @@ interface RequestRow {
   title: string;
   status: string;
   category: string;
+  description: string;
   urgency: string;
   requester: string;
   reviewNote: string | null;
+  expand?: {
+    requester?: { name?: string; email?: string };
+  };
+}
+
+function requesterLabel(r: RequestRow): string {
+  const requester = r.expand?.requester;
+  return requester?.name || requester?.email || "unknown";
 }
 
 const DECISION_TO_STATUS: Record<string, string> = {
@@ -26,6 +35,9 @@ export function ItAdminDashboard() {
   const { user, signOut } = useAuth();
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [pendingAction, setPendingAction] = useState<
+    Record<string, "reject" | "request_revision" | undefined>
+  >({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,24 +45,28 @@ export function ItAdminDashboard() {
     let cancelled = false;
 
     pb.collection("requests")
-      .getFullList({ sort: "-created" })
+      .getFullList({ sort: "-created", expand: "requester" })
       .then((records) => {
         if (!cancelled) setRequests(records as unknown as RequestRow[]);
       });
 
     pb.collection("requests")
-      .subscribe("*", (e) => {
-        setRequests((prev) => {
-          const record = e.record as unknown as RequestRow;
-          if (e.action === "delete") {
-            return prev.filter((r) => r.id !== record.id);
-          }
-          if (prev.some((r) => r.id === record.id)) {
-            return prev.map((r) => (r.id === record.id ? record : r));
-          }
-          return [record, ...prev];
-        });
-      })
+      .subscribe(
+        "*",
+        (e) => {
+          setRequests((prev) => {
+            const record = e.record as unknown as RequestRow;
+            if (e.action === "delete") {
+              return prev.filter((r) => r.id !== record.id);
+            }
+            if (prev.some((r) => r.id === record.id)) {
+              return prev.map((r) => (r.id === record.id ? record : r));
+            }
+            return [record, ...prev];
+          });
+        },
+        { expand: "requester" }
+      )
       .then((fn) => {
         if (cancelled) fn();
         else unsubscribe = fn;
@@ -74,6 +90,7 @@ export function ItAdminDashboard() {
         reviewedBy: user?.id,
         ...(note ? { reviewNote: note } : {}),
       });
+      setPendingAction((prev) => ({ ...prev, [requestId]: undefined }));
     } catch (err) {
       setError(pbErrorMessage(err));
     }
@@ -115,6 +132,8 @@ export function ItAdminDashboard() {
               title={r.title}
               meta={`${r.category.replace(/_/g, " ")} · ${r.urgency} urgency`}
               status={r.status}
+              description={r.description}
+              submittedBy={requesterLabel(r)}
             >
               {r.status === "revision_requested" && (
                 <div className="flex flex-col gap-2">
@@ -131,13 +150,44 @@ export function ItAdminDashboard() {
                   </p>
                 </div>
               )}
-              {r.status === "pending" ? (
+              {r.status === "pending" && !pendingAction[r.id] && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => review(r.id, "approve")}
+                    className="bg-sage text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() =>
+                      setPendingAction((prev) => ({ ...prev, [r.id]: "reject" }))
+                    }
+                    className="bg-rust text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() =>
+                      setPendingAction((prev) => ({
+                        ...prev,
+                        [r.id]: "request_revision",
+                      }))
+                    }
+                    className="bg-violet text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                  >
+                    Request revision
+                  </button>
+                </div>
+              )}
+
+              {r.status === "pending" && pendingAction[r.id] && (
                 <div className="flex flex-col gap-2">
                   <label
                     htmlFor={`note-${r.id}`}
                     className="font-mono text-xs uppercase tracking-wide text-ink/60"
                   >
-                    Note (required for reject / request revision)
+                    Alasan {pendingAction[r.id] === "reject" ? "reject" : "request revision"}{" "}
+                    (wajib diisi)
                   </label>
                   <textarea
                     id={`note-${r.id}`}
@@ -146,32 +196,30 @@ export function ItAdminDashboard() {
                       setNotes((prev) => ({ ...prev, [r.id]: e.target.value }))
                     }
                     rows={2}
+                    autoFocus
                     className="border border-ink/20 rounded-sm bg-transparent px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-amber"
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={() => review(r.id, "approve")}
-                      className="bg-sage text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90"
+                      onClick={() => review(r.id, pendingAction[r.id]!)}
+                      disabled={!notes[r.id]?.trim()}
+                      className={`font-display font-semibold text-xs rounded-sm px-3 py-1.5 text-paper hover:opacity-90 disabled:opacity-40 ${
+                        pendingAction[r.id] === "reject" ? "bg-rust" : "bg-violet"
+                      }`}
                     >
-                      Approve
+                      Confirm
                     </button>
                     <button
-                      onClick={() => review(r.id, "reject")}
-                      disabled={!notes[r.id]?.trim()}
-                      className="bg-rust text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90 disabled:opacity-40"
+                      onClick={() =>
+                        setPendingAction((prev) => ({ ...prev, [r.id]: undefined }))
+                      }
+                      className="border border-ink/20 text-ink/60 hover:text-ink font-display font-semibold text-xs rounded-sm px-3 py-1.5"
                     >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => review(r.id, "request_revision")}
-                      disabled={!notes[r.id]?.trim()}
-                      className="bg-violet text-paper font-display font-semibold text-xs rounded-sm px-3 py-1.5 hover:opacity-90 disabled:opacity-40"
-                    >
-                      Request revision
+                      Cancel
                     </button>
                   </div>
                 </div>
-              ) : null}
+              )}
             </TicketCard>
           ))}
         </ul>

@@ -111,6 +111,7 @@ export function RequesterDashboard() {
                 title={r.title}
                 meta={`${r.category.replace(/_/g, " ")} · ${r.urgency} urgency`}
                 status={r.status}
+                description={r.description}
               >
                 {r.status === "revision_requested" && (
                   <div className="flex flex-col gap-4">
