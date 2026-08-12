@@ -16,6 +16,7 @@ RUN apk add --no-cache unzip ca-certificates && \
 
 WORKDIR /pb
 COPY pb_migrations ./pb_migrations
+COPY pb_hooks ./pb_hooks
 
 EXPOSE 8090
 VOLUME ["/pb/pb_data"]
