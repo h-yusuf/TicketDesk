@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import { pb } from "../pocketbase";
 import { useAuth } from "../auth/AuthContext";
 import { CreateRequestForm } from "./CreateRequestForm";
 import { TicketCard } from "./TicketCard";
@@ -24,12 +23,42 @@ export function RequesterDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "requests"), where("requesterId", "==", user.uid));
-    return onSnapshot(q, (snap) => {
-      setRequests(
-        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<RequestRow, "id">) }))
-      );
-    });
+    const filter = `requester = "${user.id}"`;
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
+    pb.collection("requests")
+      .getFullList({ filter, sort: "-created" })
+      .then((records) => {
+        if (!cancelled) setRequests(records as unknown as RequestRow[]);
+      });
+
+    pb.collection("requests")
+      .subscribe(
+        "*",
+        (e) => {
+          setRequests((prev) => {
+            const record = e.record as unknown as RequestRow;
+            if (e.action === "delete") {
+              return prev.filter((r) => r.id !== record.id);
+            }
+            if (prev.some((r) => r.id === record.id)) {
+              return prev.map((r) => (r.id === record.id ? record : r));
+            }
+            return [record, ...prev];
+          });
+        },
+        { filter }
+      )
+      .then((fn) => {
+        if (cancelled) fn();
+        else unsubscribe = fn;
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [user]);
 
   return (

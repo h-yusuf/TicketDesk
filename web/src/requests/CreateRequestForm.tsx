@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../firebase";
+import { pb } from "../pocketbase";
+import { pbErrorMessage } from "../pbError";
 
 const CATEGORIES = [
   { value: "feature_request", label: "Request Baru" },
@@ -25,20 +25,25 @@ export function CreateRequestForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!title.trim() || !description.trim()) {
+      setError("Title and description are required.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const createRequest = httpsCallable(functions, "createRequest");
-      const result = (await createRequest({
-        title,
+      const record = await pb.collection("requests").create({
+        requester: pb.authStore.record?.id,
+        title: title.trim(),
         category,
-        description,
+        description: description.trim(),
         urgency,
-      })) as { data: { requestId: string } };
-      onCreated(result.data.requestId);
+        status: "pending",
+      });
+      onCreated(record.id);
       setTitle("");
       setDescription("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit request.");
+      setError(pbErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

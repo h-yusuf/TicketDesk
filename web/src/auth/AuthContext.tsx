@@ -5,22 +5,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut as fbSignOut,
-  type User,
-} from "firebase/auth";
-import { httpsCallable } from "firebase/functions";
-import { auth, functions } from "../firebase";
+import { type RecordModel } from "pocketbase";
+import { pb } from "../pocketbase";
 
-type Role = "requester" | "it_admin" | null;
+type Role = "requester" | "it_admin";
 
 interface AuthValue {
-  user: User | null;
+  user: RecordModel | null;
   role: Role;
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
@@ -31,45 +22,41 @@ interface AuthValue {
 
 const AuthContext = createContext<AuthValue | undefined>(undefined);
 
-async function bootstrapAndFetchRole(): Promise<Role> {
-  const bootstrap = httpsCallable(functions, "bootstrapUser");
-  const result = (await bootstrap({})) as { data: { role: Role } };
-  return result.data.role;
+function roleOf(user: RecordModel | null): Role {
+  return user?.role === "it_admin" ? "it_admin" : "requester";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<Role>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<RecordModel | null>(
+    pb.authStore.record
+  );
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        const r = await bootstrapAndFetchRole();
-        setRole(r);
-      } else {
-        setRole(null);
-      }
-      setLoading(false);
+    return pb.authStore.onChange(() => {
+      setUser(pb.authStore.record);
     });
   }, []);
 
   const value: AuthValue = {
     user,
-    role,
-    loading,
+    role: roleOf(user),
+    loading: false,
     signInEmail: async (email, password) => {
-      await signInWithEmailAndPassword(auth, email, password);
+      await pb.collection("users").authWithPassword(email, password);
     },
     signUpEmail: async (email, password) => {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await pb.collection("users").create({
+        email,
+        password,
+        passwordConfirm: password,
+      });
+      await pb.collection("users").authWithPassword(email, password);
     },
     signInGoogle: async () => {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await pb.collection("users").authWithOAuth2({ provider: "google" });
     },
     signOut: async () => {
-      await fbSignOut(auth);
+      pb.authStore.clear();
     },
   };
 

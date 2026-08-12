@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
-import { doc, updateDoc, Timestamp } from "firebase/firestore";
-import { db } from "../firebase";
+import { pb } from "../pocketbase";
+import { pbErrorMessage } from "../pbError";
 
 const CATEGORIES = [
   { value: "feature_request", label: "Request Baru" },
@@ -47,18 +47,17 @@ export function ReviseRequestForm({
     }
     setSubmitting(true);
     try {
-      await updateDoc(doc(db, "requests", request.id), {
+      await pb.collection("requests").update(request.id, {
         title: title.trim(),
         category,
         description: description.trim(),
         urgency,
         status: "pending",
-        reviewNote: null,
-        updatedAt: Timestamp.now(),
+        reviewNote: "",
       });
       onResubmitted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resubmit request.");
+      setError(pbErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

@@ -1,10 +1,9 @@
 {
   "name": "reqflow",
   "private": true,
-  "workspaces": ["web", "functions"],
+  "workspaces": ["web"],
   "scripts": {
     "dev": "npm --workspace web run dev",
-    "build": "npm --workspace web run build",
-    "emulators": "firebase emulators:start"
+    "build": "npm --workspace web run build"
   }
 }

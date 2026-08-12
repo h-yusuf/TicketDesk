@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
-import { db, functions } from "../firebase";
+import { pb } from "../pocketbase";
+import { pbErrorMessage } from "../pbError";
 import { useAuth } from "../auth/AuthContext";
 import { TicketCard } from "./TicketCard";
 
@@ -11,22 +10,54 @@ interface RequestRow {
   status: string;
   category: string;
   urgency: string;
-  requesterId: string;
+  requester: string;
   reviewNote: string | null;
 }
 
+const DECISION_TO_STATUS: Record<string, string> = {
+  approve: "approved",
+  reject: "rejected",
+  request_revision: "revision_requested",
+};
+
 export function ItAdminDashboard() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    return onSnapshot(collection(db, "requests"), (snap) => {
-      setRequests(
-        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<RequestRow, "id">) }))
-      );
-    });
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
+    pb.collection("requests")
+      .getFullList({ sort: "-created" })
+      .then((records) => {
+        if (!cancelled) setRequests(records as unknown as RequestRow[]);
+      });
+
+    pb.collection("requests")
+      .subscribe("*", (e) => {
+        setRequests((prev) => {
+          const record = e.record as unknown as RequestRow;
+          if (e.action === "delete") {
+            return prev.filter((r) => r.id !== record.id);
+          }
+          if (prev.some((r) => r.id === record.id)) {
+            return prev.map((r) => (r.id === record.id ? record : r));
+          }
+          return [record, ...prev];
+        });
+      })
+      .then((fn) => {
+        if (cancelled) fn();
+        else unsubscribe = fn;
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   async function review(
@@ -35,15 +66,14 @@ export function ItAdminDashboard() {
   ) {
     setError(null);
     try {
-      const reviewRequest = httpsCallable(functions, "reviewRequest");
       const note = notes[requestId]?.trim();
-      await reviewRequest({
-        requestId,
-        decision,
-        ...(note ? { note } : {}),
+      await pb.collection("requests").update(requestId, {
+        status: DECISION_TO_STATUS[decision],
+        reviewedBy: user?.id,
+        ...(note ? { reviewNote: note } : {}),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Review action failed.");
+      setError(pbErrorMessage(err));
     }
   }
 
