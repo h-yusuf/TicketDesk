@@ -33,6 +33,7 @@ export function CreateRequestForm({
     try {
       const record = await pb.collection("requests").create({
         requester: pb.authStore.model?.id,
+        requesterEmail: pb.authStore.model?.email,
         title: title.trim(),
         category,
         description: description.trim(),

@@ -50,7 +50,7 @@ export function RequesterDashboard() {
             return [record, ...prev];
           });
         },
-        { filter }
+        { query: { filter } }
       )
       .then((fn) => {
         if (cancelled) fn();

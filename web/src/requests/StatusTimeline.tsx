@@ -9,7 +9,9 @@ interface LogEntry {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso.replace(" ", "T") + "Z").toLocaleString("id-ID", {
+  // PocketBase's `created` string already ends in "Z" (e.g.
+  // "2026-08-12 08:19:02.960Z") — only the space needs to become "T".
+  return new Date(iso.replace(" ", "T")).toLocaleString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",

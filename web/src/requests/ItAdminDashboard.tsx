@@ -14,15 +14,12 @@ interface RequestRow {
   description: string;
   urgency: string;
   requester: string;
+  requesterEmail: string;
   reviewNote: string | null;
-  expand?: {
-    requester?: { name?: string; email?: string };
-  };
 }
 
 function requesterLabel(r: RequestRow): string {
-  const requester = r.expand?.requester;
-  return requester?.name || requester?.email || "unknown";
+  return r.requesterEmail ? r.requesterEmail.split("@")[0] : "unknown";
 }
 
 const DECISION_TO_STATUS: Record<string, string> = {
@@ -45,7 +42,7 @@ export function ItAdminDashboard() {
     let cancelled = false;
 
     pb.collection("requests")
-      .getFullList({ sort: "-created", expand: "requester" })
+      .getFullList({ sort: "-created" })
       .then((records) => {
         if (!cancelled) setRequests(records as unknown as RequestRow[]);
       });
@@ -64,8 +61,7 @@ export function ItAdminDashboard() {
             }
             return [record, ...prev];
           });
-        },
-        { expand: "requester" }
+        }
       )
       .then((fn) => {
         if (cancelled) fn();
