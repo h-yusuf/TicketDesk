@@ -24,6 +24,19 @@ onRecordBeforeCreateRequest((e) => {
 // failure when this was factored into shared helpers).
 
 onRecordAfterCreateRequest((e) => {
+  try {
+    const dao = $app.dao();
+    const statusLogs = dao.findCollectionByNameOrId("status_logs");
+    const log = new Record(statusLogs, {
+      request: e.record.id,
+      status: e.record.get("status"),
+      source: "pengajuan",
+    });
+    dao.saveRecord(log);
+  } catch (err) {
+    console.log("status_logs write (create) error:", err);
+  }
+
   const token = $os.getenv("DISCORD_BOT_TOKEN");
   const channelId = $os.getenv("DISCORD_HOME_CHANNEL");
   if (!token || !channelId) return;
@@ -82,6 +95,19 @@ onRecordAfterUpdateRequest((e) => {
   const oldStatus = e.record.originalCopy().get("status");
   const newStatus = e.record.get("status");
   if (oldStatus === newStatus) return;
+
+  try {
+    const dao = $app.dao();
+    const statusLogs = dao.findCollectionByNameOrId("status_logs");
+    const log = new Record(statusLogs, {
+      request: e.record.id,
+      status: newStatus,
+      source: "pengajuan",
+    });
+    dao.saveRecord(log);
+  } catch (err) {
+    console.log("status_logs write (update) error:", err);
+  }
 
   const token = $os.getenv("DISCORD_BOT_TOKEN");
   const channelId = $os.getenv("DISCORD_HOME_CHANNEL");
@@ -200,6 +226,18 @@ cronAdd("notion_status_sync", "*/5 * * * *", () => {
       if (notionStatus && notionStatus !== record.get("status")) {
         record.set("status", notionStatus);
         dao.saveRecord(record);
+
+        try {
+          const statusLogs = dao.findCollectionByNameOrId("status_logs");
+          const log = new Record(statusLogs, {
+            request: record.id,
+            status: notionStatus,
+            source: "pengerjaan",
+          });
+          dao.saveRecord(log);
+        } catch (err) {
+          console.log("status_logs write (sync) error:", err);
+        }
       }
     } catch (err) {
       console.log("Notion sync error for", record.id, err);

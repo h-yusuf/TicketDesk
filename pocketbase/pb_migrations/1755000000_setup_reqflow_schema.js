@@ -43,7 +43,11 @@ migrate((db) => {
     // against the existing value.
     updateRule:
       '(@request.auth.role = "it_admin" && ((@request.data.status != "rejected" && @request.data.status != "revision_requested") || @request.data.reviewNote != "")) || (requester = @request.auth.id && status = "revision_requested" && @request.data.status = "pending" && @request.data.requester:isset = false)',
-    deleteRule: "",
+    // null = admins-only. PocketBase treats "" as "allow everyone" (the
+    // opposite of Firestore's `if false` idiom this was meant to mirror) —
+    // see 1755100001_fix_requests_delete_rule.js for the patch that fixes
+    // this on databases that already ran this migration.
+    deleteRule: null,
     schema: [
       new SchemaField({
         name: "requester",
