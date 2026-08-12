@@ -3,6 +3,8 @@ import { pb } from "../pocketbase";
 import { pbErrorMessage } from "../pbError";
 import { useAuth } from "../auth/AuthContext";
 import { TicketCard } from "./TicketCard";
+import { ReviewGuideRail } from "./ReviewGuideRail";
+import { StatusLegendRail } from "./StatusLegendRail";
 
 interface RequestRow {
   id: string;
@@ -78,7 +80,10 @@ export function ItAdminDashboard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-10 flex gap-8 justify-center">
+      <ReviewGuideRail />
+
+      <div className="w-full max-w-3xl">
       <header className="flex items-baseline justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-dark">
@@ -171,6 +176,9 @@ export function ItAdminDashboard() {
           ))}
         </ul>
       )}
+      </div>
+
+      <StatusLegendRail />
     </div>
   );
 }

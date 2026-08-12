@@ -76,4 +76,8 @@
     @apply inline-block font-mono text-[11px] font-semibold tracking-widest uppercase
       px-2.5 py-1 border-2 rounded-sm -rotate-6 select-none;
   }
+
+  .rail-card {
+    @apply bg-white/60 border border-dashed border-ink/20 rounded-md p-4;
+  }
 }
