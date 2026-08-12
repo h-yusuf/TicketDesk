@@ -6,6 +6,9 @@ import { TicketCard } from "./TicketCard";
 import { ReviseRequestForm } from "./ReviseRequestForm";
 import { TermsRail } from "./TermsRail";
 import { StatusLegendRail } from "./StatusLegendRail";
+import { TipsRequestCard } from "./TipsRequestCard";
+import { RequestFlowCard } from "./RequestFlowCard";
+import { RailColumn } from "./SideRail";
 
 interface RequestRow {
   id: string;
@@ -65,7 +68,10 @@ export function RequesterDashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 flex gap-8 justify-center">
-      <TermsRail />
+      <RailColumn>
+        <TermsRail />
+        <TipsRequestCard />
+      </RailColumn>
 
       <div className="w-full max-w-2xl">
         <header className="flex items-baseline justify-between">
@@ -146,7 +152,10 @@ export function RequesterDashboard() {
         )}
       </div>
 
-      <StatusLegendRail />
+      <RailColumn>
+        <StatusLegendRail />
+        <RequestFlowCard />
+      </RailColumn>
     </div>
   );
 }

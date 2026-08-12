@@ -1,4 +1,4 @@
-import { SideRail } from "./SideRail";
+import { RailCard } from "./SideRail";
 
 const GUIDE = [
   "Approve kalau request jelas & bisa langsung dikerjakan.",
@@ -9,7 +9,7 @@ const GUIDE = [
 
 export function ReviewGuideRail() {
   return (
-    <SideRail eyebrow="Ketentuan" title="Panduan Review">
+    <RailCard eyebrow="Ketentuan" title="Panduan Review">
       <ol className="flex flex-col gap-2.5 text-xs font-body text-ink/70 leading-relaxed">
         {GUIDE.map((line, i) => (
           <li key={i} className="flex gap-2">
@@ -18,6 +18,6 @@ export function ReviewGuideRail() {
           </li>
         ))}
       </ol>
-    </SideRail>
+    </RailCard>
   );
 }

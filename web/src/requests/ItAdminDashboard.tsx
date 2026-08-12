@@ -5,6 +5,8 @@ import { useAuth } from "../auth/AuthContext";
 import { TicketCard } from "./TicketCard";
 import { ReviewGuideRail } from "./ReviewGuideRail";
 import { StatusLegendRail } from "./StatusLegendRail";
+import { RequestFlowCard } from "./RequestFlowCard";
+import { RailColumn } from "./SideRail";
 
 interface RequestRow {
   id: string;
@@ -94,7 +96,10 @@ export function ItAdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 flex gap-8 justify-center">
-      <ReviewGuideRail />
+      <RailColumn>
+        <ReviewGuideRail />
+        <RequestFlowCard />
+      </RailColumn>
 
       <div className="w-full max-w-3xl">
       <header className="flex items-baseline justify-between">
@@ -222,7 +227,9 @@ export function ItAdminDashboard() {
       )}
       </div>
 
-      <StatusLegendRail />
+      <RailColumn>
+        <StatusLegendRail />
+      </RailColumn>
     </div>
   );
 }

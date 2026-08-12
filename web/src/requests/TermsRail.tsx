@@ -1,4 +1,4 @@
-import { SideRail } from "./SideRail";
+import { RailCard } from "./SideRail";
 
 const TERMS = [
   "Judul singkat & spesifik — bukan cuma \"bug\" atau \"tolong dicek\".",
@@ -10,7 +10,7 @@ const TERMS = [
 
 export function TermsRail() {
   return (
-    <SideRail eyebrow="Ketentuan" title="Sebelum Mengajukan">
+    <RailCard eyebrow="Ketentuan" title="Sebelum Mengajukan">
       <ol className="flex flex-col gap-2.5 text-xs font-body text-ink/70 leading-relaxed">
         {TERMS.map((term, i) => (
           <li key={i} className="flex gap-2">
@@ -19,6 +19,6 @@ export function TermsRail() {
           </li>
         ))}
       </ol>
-    </SideRail>
+    </RailCard>
   );
 }

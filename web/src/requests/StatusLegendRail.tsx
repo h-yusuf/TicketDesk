@@ -1,11 +1,11 @@
-import { SideRail } from "./SideRail";
+import { RailCard } from "./SideRail";
 import { StatusStamp, STATUS_META } from "./StatusStamp";
 
 const STATUS_ORDER = ["pending", "approved", "rejected", "revision_requested"];
 
 export function StatusLegendRail() {
   return (
-    <SideRail eyebrow="Kode Status" title="Arti Setiap Stempel">
+    <RailCard eyebrow="Kode Status" title="Arti Setiap Stempel">
       <ul className="flex flex-col gap-4">
         {STATUS_ORDER.map((status) => (
           <li key={status} className="flex flex-col gap-4">
@@ -16,6 +16,6 @@ export function StatusLegendRail() {
           </li>
         ))}
       </ul>
-    </SideRail>
+    </RailCard>
   );
 }
