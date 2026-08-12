@@ -19,13 +19,23 @@ compose stack.
    cd reqflow
    ```
 
-2. **Jalankan stack**
+2. **(Opsional) Setup Discord + Notion integration**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Isi `.env` kalau mau notif Discord (request baru + status berubah) dan
+   auto-push ke Notion (pas approved). Kosongin/skip kalau belum perlu —
+   app tetap jalan normal, cuma gak ngirim notif/push.
+
+3. **Jalankan stack**
 
    ```bash
    docker compose up -d --build
    ```
 
-3. **Setup reverse proxy dari aaPanel (atau panel lain)**
+4. **Setup reverse proxy dari aaPanel (atau panel lain)**
 
    Karena nginx panel jalan native di host (bukan container), dari panel
    tinggal reverse-proxy ke port yang udah di-publish:
@@ -38,20 +48,20 @@ compose stack.
    - SSL: pake fitur Let's Encrypt bawaan panel buat domain itu — bukan
      tanggung jawab stack ini.
 
-4. **Buat admin account PocketBase pertama kali**
+5. **Buat admin account PocketBase pertama kali**
 
    Buka `http://127.0.0.1:8090/_/` (atau URL publik `/_/` setelah proxy
    kepasang), bikin akun admin (email + password). Ini akun admin
    PocketBase — beda dari user `it_admin` di app.
 
-5. **(Opsional) Setup Google Sign-In**
+6. **(Opsional) Setup Google Sign-In**
 
    Di Admin UI → Settings → Auth Providers → Google:
    - Daftar OAuth2 client di [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
    - Redirect URI: `https://domain-lo.com/api/oauth2-redirect`
    - Masukin Client ID + Client Secret, aktifkan toggle.
 
-6. **Promote user pertama jadi IT/Admin**
+7. **Promote user pertama jadi IT/Admin**
 
    Setelah ada yang signup lewat app, buka Admin UI → Collections →
    `users` → klik record user itu → ubah field `role` jadi `it_admin` →

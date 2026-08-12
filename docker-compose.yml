@@ -7,6 +7,12 @@ services:
       - "8090:8090"
     volumes:
       - pb_data:/pb/pb_data
+    environment:
+      # All optional — unset means that integration's hook no-ops silently.
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_HOME_CHANNEL: ${DISCORD_HOME_CHANNEL:-}
+      NOTION_TOKEN: ${NOTION_TOKEN:-}
+      NOTION_DATABASE_ID: ${NOTION_DATABASE_ID:-}
 
   web:
     build:
