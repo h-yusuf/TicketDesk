@@ -28,6 +28,25 @@ onRecordAfterCreateRequest((e) => {
   const channelId = $os.getenv("DISCORD_HOME_CHANNEL");
   if (!token || !channelId) return;
 
+  const categoryLabel =
+    {
+      feature_request: "Request Baru",
+      bug_fix: "Perbaikan Bug",
+      maintenance: "Maintenance",
+      other: "Lainnya",
+    }[e.record.get("category")] || e.record.get("category");
+  const urgencyLabel =
+    { low: "Low", medium: "Medium", high: "High" }[e.record.get("urgency")] ||
+    e.record.get("urgency");
+
+  let requesterLabel = "unknown";
+  try {
+    const requester = $app.dao().findRecordById("users", e.record.get("requester"));
+    requesterLabel = requester.get("name") || requester.get("email") || requester.id;
+  } catch (err) {
+    console.log("Discord notify (create): requester lookup failed", err);
+  }
+
   try {
     const res = $http.send({
       url: `https://discord.com/api/v10/channels/${channelId}/messages`,
@@ -37,7 +56,18 @@ onRecordAfterCreateRequest((e) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        content: `🆕 Request baru: **${e.record.get("title")}** (${e.record.get("urgency")} urgency)`,
+        embeds: [
+          {
+            title: `🆕 Request Baru: ${e.record.get("title")}`,
+            color: 0xe2892e,
+            fields: [
+              { name: "Requester", value: requesterLabel, inline: true },
+              { name: "Kategori", value: categoryLabel, inline: true },
+              { name: "Urgency", value: urgencyLabel, inline: true },
+              { name: "Deskripsi", value: e.record.get("description") || "(tidak ada)" },
+            ],
+          },
+        ],
       }),
     });
     if (res.statusCode >= 300) {
@@ -91,7 +121,7 @@ onRecordAfterUpdateRequest((e) => {
     }[e.record.get("category")] || e.record.get("category");
   const priority =
     { low: "Low", medium: "Medium", high: "High" }[e.record.get("urgency")] || "Medium";
-  const description = `Kategori: ${categoryLabel}\n\n${e.record.get("description")}`;
+  const description = e.record.get("description");
 
   try {
     const res = $http.send({
@@ -106,11 +136,18 @@ onRecordAfterUpdateRequest((e) => {
         parent: { database_id: databaseId },
         properties: {
           "Nama tugas": { title: [{ text: { content: e.record.get("title") } }] },
-          Deskripsi: { rich_text: [{ text: { content: description } }] },
+          Category: { rich_text: [{ text: { content: categoryLabel } }] },
           Status: { status: { name: "New Request" } },
           Prioritas: { select: { name: priority } },
           No: { rich_text: [{ text: { content: e.record.id } }] },
         },
+        children: [
+          {
+            object: "block",
+            type: "paragraph",
+            paragraph: { rich_text: [{ text: { content: description } }] },
+          },
+        ],
       }),
     });
 
@@ -124,3 +161,48 @@ onRecordAfterUpdateRequest((e) => {
     console.log("Notion push error:", err);
   }
 }, "requests");
+
+// --- Notion status sync (poll, not webhook) -----------------------------
+//
+// Notion's webhook/Automations feature needs a paid plan and per-database
+// UI setup; polling on a cron keeps this entirely in our own hooks, same
+// as everything else here. Every 5 min, re-check each pushed request's
+// Notion page and mirror its Status back onto our `status` field, so the
+// requester/IT dashboards show how far the ticket has moved in Notion's
+// own Kanban (Backlog/To Do/In Progress/In Review/Done/Rejected) without
+// anyone needing to check Notion directly. No-ops silently if NOTION_TOKEN
+// is unset.
+cronAdd("notion_status_sync", "*/5 * * * *", () => {
+  const token = $os.getenv("NOTION_TOKEN");
+  if (!token) return;
+
+  const dao = $app.dao();
+  const records = dao.findRecordsByFilter("requests", "notionPageId != ''", "-updated", 0, 0);
+
+  for (const record of records) {
+    try {
+      const res = $http.send({
+        url: `https://api.notion.com/v1/pages/${record.get("notionPageId")}`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Notion-Version": "2022-06-28",
+        },
+      });
+
+      if (res.statusCode !== 200 || !res.json) {
+        console.log("Notion sync: fetch failed for", record.id, res.statusCode);
+        continue;
+      }
+
+      const notionStatus = res.json.properties && res.json.properties.Status &&
+        res.json.properties.Status.status && res.json.properties.Status.status.name;
+      if (notionStatus && notionStatus !== record.get("status")) {
+        record.set("status", notionStatus);
+        dao.saveRecord(record);
+      }
+    } catch (err) {
+      console.log("Notion sync error for", record.id, err);
+    }
+  }
+});
