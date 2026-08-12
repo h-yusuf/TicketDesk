@@ -1,12 +1,14 @@
 # Deploy ReqFlow ke VPS
 
-Stack: Docker Compose — `pocketbase` (backend) + `web` (frontend static, nginx) + `caddy` (reverse proxy + auto HTTPS).
+Stack: Docker Compose — `pocketbase` (backend+DB, port host `8090`) + `web`
+(frontend static, nginx, port host `8091`). Gak ada reverse proxy/domain
+di repo ini — itu diatur dari panel VPS (aaPanel dll), bukan bagian
+compose stack.
 
 ## Prasyarat
 
-- VPS Ubuntu/Debian dengan domain sudah diarahkan (A record) ke IP VPS.
 - Docker + Docker Compose plugin terinstall di VPS.
-- Port 80 dan 443 kosong (belum dipakai service lain).
+- Port 8090 dan 8091 kosong di host (`ss -tlnp | grep -E ':8090|:8091'`).
 
 ## Langkah
 
@@ -17,40 +19,43 @@ Stack: Docker Compose — `pocketbase` (backend) + `web` (frontend static, nginx
    cd reqflow
    ```
 
-2. **Buat file `.env`** di root repo (jangan commit file ini):
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env`, isi domain asli:
-
-   ```
-   DOMAIN=domain-lo.com
-   ```
-
-3. **Jalankan stack**
+2. **Jalankan stack**
 
    ```bash
    docker compose up -d --build
    ```
 
-   Caddy otomatis provision HTTPS (Let's Encrypt) buat domain di atas — pastikan DNS domain udah propagate sebelum langkah ini, kalau belum Caddy bakal retry otomatis.
+3. **Setup reverse proxy dari aaPanel (atau panel lain)**
+
+   Karena nginx panel jalan native di host (bukan container), dari panel
+   tinggal reverse-proxy ke port yang udah di-publish:
+   - Domain root (`/`) → `http://127.0.0.1:8091` (frontend)
+   - Path `/api/*` dan `/_/*` → `http://127.0.0.1:8090` (PocketBase API +
+     Admin UI) — **kalau mau 1 domain buat FE+BE**. Kalau mau subdomain
+     beda buat API (`api.domain.com` → `127.0.0.1:8090`), rebuild web
+     dengan `VITE_POCKETBASE_URL=https://api.domain.com` di-set sebelum
+     `docker compose build web`.
+   - SSL: pake fitur Let's Encrypt bawaan panel buat domain itu — bukan
+     tanggung jawab stack ini.
 
 4. **Buat admin account PocketBase pertama kali**
 
-   Buka `https://domain-lo.com/_/` di browser, ikuti form buat akun admin (email + password). Ini akun admin PocketBase (beda dari user `it_admin` di app — admin PocketBase punya akses penuh ke semua data lewat Admin UI).
+   Buka `http://127.0.0.1:8090/_/` (atau URL publik `/_/` setelah proxy
+   kepasang), bikin akun admin (email + password). Ini akun admin
+   PocketBase — beda dari user `it_admin` di app.
 
 5. **(Opsional) Setup Google Sign-In**
 
    Di Admin UI → Settings → Auth Providers → Google:
-   - Daftar OAuth2 client di [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (jenis "Web application").
+   - Daftar OAuth2 client di [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
    - Redirect URI: `https://domain-lo.com/api/oauth2-redirect`
-   - Masukin Client ID + Client Secret ke Admin UI, aktifkan toggle.
+   - Masukin Client ID + Client Secret, aktifkan toggle.
 
 6. **Promote user pertama jadi IT/Admin**
 
-   Setelah ada yang signup lewat app (`https://domain-lo.com`), buka Admin UI → Collections → `users` → klik record user itu → ubah field `role` jadi `it_admin` → Save.
+   Setelah ada yang signup lewat app, buka Admin UI → Collections →
+   `users` → klik record user itu → ubah field `role` jadi `it_admin` →
+   Save.
 
 ## Redeploy setelah update kode
 
@@ -59,12 +64,13 @@ git pull
 docker compose up -d --build
 ```
 
-Data PocketBase (`pb_data` volume) dan sertifikat Caddy (`caddy_data` volume) persist lintas rebuild/restart — gak hilang kecuali `docker compose down -v`.
+Data PocketBase (`pb_data` volume) persist lintas rebuild/restart — gak
+hilang kecuali `docker compose down -v`.
 
 ## Cek status / troubleshooting
 
 ```bash
 docker compose ps
-docker compose logs -f caddy       # cek proses HTTPS provisioning
-docker compose logs -f pocketbase  # cek migration/schema apply
+docker compose logs -f pocketbase   # cek migration/schema apply
+docker compose logs -f web
 ```
