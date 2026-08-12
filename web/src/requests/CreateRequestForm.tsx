@@ -32,7 +32,7 @@ export function CreateRequestForm({
     setSubmitting(true);
     try {
       const record = await pb.collection("requests").create({
-        requester: pb.authStore.record?.id,
+        requester: pb.authStore.model?.id,
         title: title.trim(),
         category,
         description: description.trim(),

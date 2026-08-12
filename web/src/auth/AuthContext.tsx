@@ -28,12 +28,12 @@ function roleOf(user: RecordModel | null): Role {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<RecordModel | null>(
-    pb.authStore.record
+    pb.authStore.model as RecordModel | null
   );
 
   useEffect(() => {
     return pb.authStore.onChange(() => {
-      setUser(pb.authStore.record);
+      setUser(pb.authStore.model as RecordModel | null);
     });
   }, []);
 
